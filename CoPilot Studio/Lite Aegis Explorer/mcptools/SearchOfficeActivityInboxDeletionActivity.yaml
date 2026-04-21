@@ -1,0 +1,44 @@
+name: search_officeactivity_inbox_deletion_activity
+description: >
+  Searches OfficeActivity for Exchange inbox and deletion lifecycle events
+  (RecordType 2 and 3) across Create, Update, Move, MoveToDeletedItems,
+  SoftDelete, HardDelete, and MailItemsAccessed operations. Use this tool to
+  investigate recipient mailbox handling, read/access behavior, and possible
+  deletion or tampering of messages.
+collection: OfficeActivityExchangeAudit
+defaultWorkspace: 357f57e7-88a9-4986-8caa-eb5ff128335f
+query: >
+  OfficeActivity
+  | where TimeGenerated between (datetime('{startTime}') .. datetime('{endTime}'))
+  | where OfficeWorkload =~ "Exchange"
+  | where RecordType in (2, 3)
+  | where Operation in ("Create", "Update", "Move", "MoveToDeletedItems", "SoftDelete", "HardDelete", "MailItemsAccessed")
+  | where '{recipient}' == '*' or tostring(MailboxOwnerUPN) has '{recipient}'
+  | where '{operation}' == '*' or tostring(Operation) =~ '{operation}'
+  | where '{subject}' == '*' or tostring(Parameters) has '{subject}'
+  | project TimeGenerated, MailboxOwnerUPN, UserId, Operation, ObjectId, ClientIP, ResultStatus, Parameters
+  | order by TimeGenerated asc
+parameters:
+  - name: startTime
+    type: string
+    description: "Start of the search window in ISO 8601 format (for example 2026-04-01T00:00:00)."
+    required: true
+  - name: endTime
+    type: string
+    description: "End of the search window in ISO 8601 format (for example 2026-04-02T23:59:59)."
+    required: true
+  - name: recipient
+    type: string
+    description: "Recipient mailbox owner UPN or partial identifier to filter MailboxOwnerUPN. Use '*' for all mailboxes."
+    required: false
+    default: "*"
+  - name: operation
+    type: string
+    description: "Specific operation to filter within the allowed inbox lifecycle set. Use '*' for all listed operations."
+    required: false
+    default: "*"
+  - name: subject
+    type: string
+    description: "Subject keyword filter using the Parameters payload. Use '*' to disable subject filtering."
+    required: false
+    default: "*"

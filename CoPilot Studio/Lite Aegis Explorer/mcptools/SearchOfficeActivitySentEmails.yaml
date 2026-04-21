@@ -1,0 +1,37 @@
+name: search_officeactivity_sent_emails
+description: >
+  Searches OfficeActivity for Exchange sent email events (RecordType 2, Operation Send)
+  within a date range. Returns key sender and transport context fields to support
+  compliance reviews, suspicious outbound activity checks, and account compromise
+  investigations.
+collection: OfficeActivityExchangeAudit
+defaultWorkspace: 357f57e7-88a9-4986-8caa-eb5ff128335f
+query: >
+  OfficeActivity
+  | where TimeGenerated between (datetime('{startTime}') .. datetime('{endTime}'))
+  | where OfficeWorkload =~ "Exchange"
+  | where RecordType == 2
+  | where Operation =~ "Send"
+  | where '{sender}' == '*' or tostring(UserId) has '{sender}'
+  | where '{subject}' == '*' or tostring(Parameters) has '{subject}'
+  | project TimeGenerated, UserId, Operation, RecordType, ClientIP, ResultStatus, ObjectId, Parameters
+  | order by TimeGenerated desc
+parameters:
+  - name: startTime
+    type: string
+    description: "Start of the search window in ISO 8601 format (for example 2026-04-01T00:00:00)."
+    required: true
+  - name: endTime
+    type: string
+    description: "End of the search window in ISO 8601 format (for example 2026-04-02T23:59:59)."
+    required: true
+  - name: sender
+    type: string
+    description: "Sender UPN or partial account string to filter UserId. Use '*' to return all senders."
+    required: false
+    default: "*"
+  - name: subject
+    type: string
+    description: "Subject keyword filter using the Parameters payload. Use '*' to disable subject filtering."
+    required: false
+    default: "*"

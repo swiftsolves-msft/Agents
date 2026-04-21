@@ -1,0 +1,35 @@
+name: search_officeactivity_exchange_admin_changes
+description: >
+  Searches OfficeActivity for Exchange administrative operations (RecordType 1)
+  within a date range. Use this tool to investigate mailbox configuration changes,
+  policy updates, and other privileged Exchange actions.
+collection: OfficeActivityExchangeAudit
+defaultWorkspace: 357f57e7-88a9-4986-8caa-eb5ff128335f
+query: >
+  OfficeActivity
+  | where TimeGenerated between (datetime('{startTime}') .. datetime('{endTime}'))
+  | where OfficeWorkload =~ "Exchange"
+  | where RecordType == 1
+  | where '{adminUser}' == '*' or tostring(UserId) has '{adminUser}'
+  | where '{operation}' == '*' or tostring(Operation) has '{operation}'
+  | project TimeGenerated, UserId, Operation, ObjectId, ClientIP, ResultStatus, Parameters
+  | order by TimeGenerated desc
+parameters:
+  - name: startTime
+    type: string
+    description: "Start of the search window in ISO 8601 format (for example 2026-04-01T00:00:00)."
+    required: true
+  - name: endTime
+    type: string
+    description: "End of the search window in ISO 8601 format (for example 2026-04-02T23:59:59)."
+    required: true
+  - name: adminUser
+    type: string
+    description: "Admin UPN or partial account string to filter UserId. Use '*' to return all admins."
+    required: false
+    default: "*"
+  - name: operation
+    type: string
+    description: "Operation name filter (for example Set-Mailbox or New-InboxRule). Use '*' for all operations."
+    required: false
+    default: "*"

@@ -5,5 +5,6 @@ Aegis - Brings wisdom and clarity to prompt questions surrounding the Microsoft 
 Use with Claude Sonnet 4.6
 
 Use with: 
-- contentTypes = Audit.Exchange
-- recordTypes = 1,2,3
+- Exchange
+- Teams
+- SharePoint
